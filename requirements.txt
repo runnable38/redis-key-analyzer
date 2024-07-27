@@ -1,0 +1,5 @@
+click
+redis
+tqdm
+texttable
+prettytable
