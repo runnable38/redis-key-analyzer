@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="redis-key-analyzer",
-    version="0.1.3",
+    version="0.1.4",
     description="Redis Key Analyzer is a CLI tool for scanning and analyzing Redis database keys, providing insights into their distribution, type, memory usage, and TTL.",
     long_description=pathlib.Path("README.md").read_text(),
     long_description_content_type="text/markdown",
