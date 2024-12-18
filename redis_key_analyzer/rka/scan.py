@@ -88,7 +88,7 @@ def scan_redis_key_info(
                 count += 1
                 pbar.update(1)
 
-                if 0 < limit <= count:
+                if limit >= count:
                     break
 
             if sleep_seconds > 0:
