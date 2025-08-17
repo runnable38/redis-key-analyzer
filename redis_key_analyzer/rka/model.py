@@ -15,7 +15,7 @@ class RedisKeyInfo:
 
 
 @dataclasses.dataclass
-class RedisKeyPatterStat:
+class RedisKeyPatternStat:
     pattern: str = None
     dtype: str = None
     ttl: str = None

@@ -9,7 +9,8 @@ from rka.redis_key_analyzer import start_redis_key_analyzer
 @click.option("--host", default="localhost", help="Redis host.")
 @click.option("--port", default=6379, help="Redis port.")
 @click.option("--db", default=0, help="Redis database.")
-@click.option("--read-only", "-ro", is_flag=True, help="Check read-only cluster")
+@click.option("--read-only", "-ro", is_flag=True, help="Check read-only cluster before scan. If set and the cluster "
+                                                       "is not read-only, the program will exit.")
 @click.option("--match", "-m", default="*", help="Redis key pattern")
 @click.option("--batch-size", default=1000, help="Batch size")
 @click.option(
