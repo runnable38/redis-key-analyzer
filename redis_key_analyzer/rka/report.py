@@ -3,10 +3,10 @@ from collections import defaultdict
 
 from prettytable import PrettyTable
 
-from rka.model import RedisKeyPatterStat
+from rka.model import RedisKeyPatternStat
 
 
-def generate_report_rows(key_pattern_infos: list[RedisKeyPatterStat]):
+def generate_report_rows(key_pattern_infos: list[RedisKeyPatternStat]):
     fields = [
         "pattern",
         "dtype",
@@ -46,13 +46,13 @@ def generate_report_rows(key_pattern_infos: list[RedisKeyPatterStat]):
     return fields, rows
 
 
-def generate_report(key_pattern_infos: list[RedisKeyPatterStat], filepath: str = None):
+def generate_report(key_pattern_infos: list[RedisKeyPatternStat], filepath: str = None):
     key_pattern_infos = sort_key_pattern_infos(key_pattern_infos)
     fields, rows = generate_report_rows(key_pattern_infos)
     draw_with_pretty_table(fields, rows)
 
 
-def sort_key_pattern_infos(rows: list[RedisKeyPatterStat]) -> list[RedisKeyPatterStat]:
+def sort_key_pattern_infos(rows: list[RedisKeyPatternStat]) -> list[RedisKeyPatternStat]:
     """ "
     sort by total memory in the same pattern group
     """
