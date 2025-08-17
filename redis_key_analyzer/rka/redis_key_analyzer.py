@@ -19,13 +19,14 @@ def start_redis_key_analyzer(
     read_only,
     match,
     prefixes: list[str] = None,
-    separators: list[str] = None,
+    separator: str = None,
+    separator_max_depth: int = 1,
     batch_size=1000,
     limit=-1,
     sleep_seconds=-1,
 ):
     print(
-        f"Starting redis key analyzer...  {host=}, {port=}, {db=}, {batch_size=}, {match=}, {read_only=}, {prefixes=}, {separators=}, {limit=}, {sleep_seconds=}"
+        f"Starting redis key analyzer...  {host=}, {port=}, {db=}, {batch_size=}, {match=}, {read_only=}, {prefixes=}, {separator=}, {separator_max_depth=}, {limit=}, {sleep_seconds=}"
     )
     conn = redis.Redis(host=host, port=port, db=db)
 
@@ -40,19 +41,20 @@ def start_redis_key_analyzer(
         sleep_seconds=sleep_seconds,
         limit=limit,
     )
-    stats = analyze_key_info(key_infos, prefixes, separators)
+    stats = analyze_key_info(key_infos, prefixes, separator, separator_max_depth)
     generate_report(list(stats.values()), filepath=None)
 
 
 def analyze_key_info(
     key_infos: Iterable[RedisKeyInfo],
     prefixes: list[str] = None,
-    separators: list[str] = None,
+    separator: str = None,
+    separator_max_depth: int = 1,
 ):
     stat = {}
     for key_info in key_infos:
         pattern = _get_key_pattern(
-            key_info.key, prefixes=prefixes, separators=separators
+            key_info.key, prefixes=prefixes, separator=separator, separator_max_depth=separator_max_depth
         )
         ttl_type = _get_ttl_type(key_info.ttl)
         if ttl_type is None:
@@ -104,10 +106,11 @@ def _get_key_pattern(
     key: str,
     number_place_holder: str = NUMBER_PLACE_HOLDER,
     prefixes: list[str] = None,
-    separators: list[str] = None,
+    separator: str = None,
+    separator_max_depth: int = 1,
     suffix_place_holder: str = SUFFIX_PLACE_HOLDER,
 ) -> str:
-    key, changed = _replace_prefix(key, prefixes=prefixes, separators=separators, suffix_place_holder=suffix_place_holder)
+    key, changed = _replace_prefix(key, prefixes=prefixes, separator=separator, separator_max_depth=separator_max_depth, suffix_place_holder=suffix_place_holder)
     if changed:
         return key
     return _replace_number(key, number_place_holder=number_place_holder)
@@ -120,7 +123,8 @@ def _replace_number(key: str, number_place_holder: str) -> str:
 def _replace_prefix(
     key: str,
     prefixes: list[str],
-    separators: list[str],
+    separator: str,
+    separator_max_depth: int,
     suffix_place_holder: str,
 ) -> tuple[str, bool]:
     if prefixes:
@@ -128,9 +132,33 @@ def _replace_prefix(
             if key.startswith(prefix):
                 pattern = prefix + suffix_place_holder
                 return pattern, True
-    if separators:
-        for separator in separators:
-            if separator in key:
-                pattern = key[: key.find(separator) + len(separator)] + suffix_place_holder
-                return pattern, True
+    if separator:
+        matches = find_all_occurrences(key, separator, limit=separator_max_depth)
+        if matches:
+            pattern = key[:matches[-1] + len(separator)] + suffix_place_holder
+            return pattern, True
     return key, False
+
+
+def find_all_occurrences(key: str, pattern: str, limit: int | None = None) -> list[int]:
+    """
+    key: 입력 문자열
+    pattern: 찾을 패턴
+    limit: 찾을 최대 횟수 (None이면 제한 없음)
+    반환값: 매치 시작 인덱스들의 리스트
+    """
+    if not pattern:
+        raise ValueError("pattern 길이는 1 이상이어야 합니다.")
+
+    res = []
+    i = 0
+    L = len(pattern)
+    while True:
+        j = key.find(pattern, i)
+        if j == -1:
+            break
+        res.append(j)
+        if limit is not None and len(res) >= limit:
+            break
+        i = j + L  # 겹치지 않게 다음 검색 시작 위치 이동
+    return res

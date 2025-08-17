@@ -19,6 +19,7 @@ from rka.redis_key_analyzer import start_redis_key_analyzer
     help="prefixes for key pattern. ex) --prefix 'prefix1 prefix2'",
 )
 @click.option("--separator", default=":", help="separators for key pattern")
+@click.option("--separator-max-depth", default=1, help="Maximum depth for separator-based pattern matching")
 @click.option("--limit", default=-1, help="Limit total keys. -1 for no limit")
 @click.option(
     "--sleep", default=-1, help="Sleep seconds between batches. -1 for no sleep"
@@ -32,11 +33,11 @@ def main(
     batch_size: int,
     prefix: str,
     separator: str,
+    separator_max_depth: int,
     limit: int,
     sleep: int,
 ) -> None:
     prefixes = re.split(r"\s+", prefix) if prefix else None
-    separators = [separator]
     start_redis_key_analyzer(
-        host, port, db, read_only, match, prefixes, separators, batch_size, limit, sleep
+        host, port, db, read_only, match, prefixes, separator, separator_max_depth, batch_size, limit, sleep
     )
