@@ -16,7 +16,7 @@
 To install `redis-key-analyzer`, use pip:
 
 ```bash
-pip install rka
+pip install redis-key-analyzer
 ```
 
 ## Usage
@@ -35,6 +35,7 @@ Options:
   --batch-size INTEGER Batch size. Default is 1000.
   --prefix TEXT        Prefixes for key pattern. Example: --prefix 'prefix1 prefix2'.
   --separator TEXT     Separators for key pattern. Default is ':'.
+  --separator-max-depth INTEGER Max depth for separator. Default is 1.
   --limit INTEGER      Limit total keys. -1 for no limit. Default is -1.
   --sleep INTEGER      Sleep seconds between batches. -1 for no sleep. Default is -1.
   --help               Show this message and exit.
@@ -56,4 +57,72 @@ rka --host localhost [--port 6379] [--db 0] [-m '*']
 | user.sc:<*> |  hash  | NOTTL |    -1   |    -1   |   1   |           75 |   75.0  B |     75     |     75     |    1     |    1     | user.sc:123  |
 | my-string   | string | NOTTL |    -1   |    -1   |   1   |           61 |   61.0  B |     61     |     61     |    3     |    3     | my-string    |
 +-------------+--------+-------+---------+---------+-------+--------------+-----------+------------+------------+----------+----------+--------------+
+```
+
+## CLI Usage Examples
+### 1) Quick scan (defaults)
+
+Scan localhost:6379, DB 0, all keys:
+```bash
+rka
+# same as:
+# rka --host localhost --port 6379 --db 0 --match '*'
+```
+
+### 2) Filter by pattern
+
+Only analyze keys that match a specific glob pattern (e.g., sessions):
+
+```bash
+rka -m 'session:*'
+```
+
+### 3) Group by prefixes & separators
+
+Tell the analyzer which prefixes matter, and how to split keys:
+
+```bash
+# Keys like "user:123", "user:profile:456", "order:789"
+rka --prefix 'order:' --separator ':' --separator-max-depth 1
+```
+- `--separator` ':': split keys on :
+
+- `--separator-max-depth 1`: group at most one level deep, e.g. user:<*>, order:<*>
+
+- `--prefix` 'user order': highlight these prefixes in grouping stats
+
+#### 3.1)  `--separator-max-depth` examples:
+
+Assume the following keys:
+
+```text
+coupon:MKT-A:1001
+coupon:MKT-A:1002
+coupon:MKT-B:2001
+coupon:MKT-B:2002
+```
+Depth = 1
+
+Use only up to the first : as the grouping prefix.
+
+```bash
+rka --separator ':' --separator-max-depth 1
+```
+Aggregated pattern (example):
+```bash
+coupon:<*>
+```
+
+Depth = 2
+
+Use up to the second : as the grouping prefix.
+
+```bash
+rka --separator ':' --separator-max-depth 2 -m 'coupon:*'
+```
+
+Aggregated patterns (example):
+```bash
+coupon:MKT-A:<*>
+coupon:MKT-B:<*>
 ```
